@@ -1,0 +1,50 @@
+ Abrir desde Java aplicación asociada por defecto para un fichero o URL (en Windows/Linux/MacOS)
+=================================================================================================
+
+Sacado de http://programarenjava.blogspot.com/
+
+
+Cuando programas aplicaciones para entornos de escritorio es común tener que abrir aplicaciones externas que estén asociadas con un determinado tipo de archivos. Es muy común tener que abrir una página web en el navegador, una imagen en el visor de imágenes del sistema operativo, etc. También es una situación bastante común lanzar el reproductor de audio/video del sistema operativo para no depender del JMF para reproducir un archivo multimedia (si alguien ha sufrido el JMF entenderá lo que estoy diciendo).
+
+Esta tarea que a priori debería ser sencilla, en la realidad es una auténtica pesadilla en Java. El problema es que no existe ningún mecanismo estándar para averiguar cual es la aplicación asociada para un determinado tipo de archivo, por lo que normalmente hay que diseñar una solución muy específica que suele hacer que esa aplicación dependa de un programa externo vinculado a un sistema operativo.
+
+La cosa se vuelve más complicada si pretendemos que esta solución sea multiplataforma. No existen muchos proyectos que ofrezcan soluciones generales para este problema, el único que ofrece una solución multiplataforma para este problema es jdic. Este proyecto usa JNI y depende de librerías nativas, lo que complica bastante el despliegue de la aplicación, por lo que a veces no es posible usarlo.
+
+En entornos windows parece bastante arrancar la aplicación asociada a un archivo o URL, ya que existe el comando start que permite arrancar la aplicación asociada a un fichero o url. La única dificultad radica en diferenciar entre Windows 95 y las versiones actuales de Windows para ejecutar el intérprete de comandos adecuado. Existen otras soluciones más elaboradas, como puede ser averigual cuál es la aplicación asociada en el registro, pero creo que simplemente añaden complejidad al asunto y no aportan ninguna mejora.
+
+En el caso de Linux la cosa se complica bastante, ya que no existe ningún registro centralizado de los programas asociados a un tipo de archivo o URL, por lo que cada entorno de escritorio ha solucionado este problema de formas distintas. Existe un subproyecto de FreeDesktop denominado Portland, que dentro de su paquete de utilidades xdg-utils incluye la aplicación xdg-open que permite solucionar el problema en Linux. Actualmente no está integrado dentro de todas las distribuciones, pero cuando lo esté xdg-open será un equivalente en Linux a su homólogo start en Windows.
+
+Actualmente y a la espera de que se incluya el paguete xdg-utils en todas las distribuciones, la mejor opción es intentar detectar el entorno de escritorio que en el que se está ejecutando nuestra aplicación en Java, y en función de esto usar el programa específico para ese entorno de escritorio que nos proporcione la aplicación asociada. En el caso de GNOME tenemos la aplicación gnome-open y en el caso de KDE tenemos kmfclient.
+
+Podemos encontrar un resumen de las opciones disponibles en Windows y Linux en este documento. También podemos ver ejemplos de uso de estas aplicaciones en Java en [1] y [2].
+
+Con toda esta información he intentado crear una clase que recoge todas las ideas antes expuestas y que pretende solucionar el problema en el abanico más amplio de plataformas posible sin depender de librerías o programas externos.
+
+Me gustaría compartir este código (que es tan sólo una primera versión) y que me comentaseis qué os parece y qué cosas cambiaríais/mejoraríais.
+
+
+
+
+Comentarios:
+===============
+
+Anonymous hfelici dijo...
+
+hay un pequeño problema en windows con los documentos que tienen espacios, para ello tenemos que establecer el título de la ventana para después poner el nombre del fichero tal que:
+
+
+    exec( new String[]{"cmd.exe", "/C", "start", "\"dummy\"", strComando} );
+
+
+    el comando start se describe aqui:http://www.ss64.com/nt/start.html
+
+
+    Héctor
+    febrero 02, 2007 8:40 PM   
+Anonymous programarenjava dijo...
+
+    Gracias hfelici!!
+
+    Parece ser que el comando start recibe como primer parámetro opcional el título de la ventana. El problema es que si el documento tiene espacios en blanco el comando puede interpretar la primera parte como el título de la ventana, lo que provocará que no se abra el documento correctamente.
+
+    Para estar seguros es mejor pasar siempre un primer parámetro una cadena de texto fija que sea el nombre de la ventana.
